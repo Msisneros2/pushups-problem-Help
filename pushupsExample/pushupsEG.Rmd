@@ -1,0 +1,75 @@
+---
+title: "pushups Example"
+author: "Dr. J"
+date: "March 17, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tigerstats) #get the tigerstats library; used for most homework
+data(pushups) # data set 'pushups'
+head(pushups) # look at the first 6 lines
+```
+
+<!---
+This example is designed to help with the 'pushups' analysis project.  In that project you're investigating whether the number of pushups members of the Georgevillage football team, the 'Fighting Goldfish', can do in 2 minutes is related to position -- skill or line
+
+in the pushups data set we find 'weight', 'pushups,' and 'position' variables.  Weight and pushups are numerical variables, position is a categorical variable.  In this example, I'll look at a similar question to that posed in the pushups project, viz., 'is the average weight of players in the LINE position greater than the average weight of players in skill positions?'
+
+This is an observational study, not an experiment.  A random sample of 30 players from the GC football team was taken; results are thus an inferential summary for the GC football squad.
+-->
+
+Question: on average do line players weight more than skill players?
+
+## set up the null and alternative hypotheses
+$\mu_0$ is the average weight of players in skill positions, and $\mu_1$ the average weitght of players in line positions, then
+
+
+$H_0: \mu_0 \le \mu_1$  and   
+$H_A: \mu_0 \gt \mu_1$  
+
+<!---
+Notice that $H_A$ is the research hypothesis, that is, it represents what we think is 'going on.'  The null hypothesis, $H_0$ basically says "no it isn't," there is no evidence that $H_A$ is true.   In every hypothesis test we assume the null hypothesis is true, and the statistical test results can only be 'reject the null hypothesis,' or 'fail to reject the null hypothesis.'
+
+-->
+
+### t-test to compare the means of the two groups:
+
+```{r}
+t.TestGC = ttestGC(weight~position, data=pushups, first = "LINE", alternative = 'greater')
+print(t.TestGC)
+
+```
+
+### get the p-value for the hypothesis test:
+
+```{r}
+t.test(weight~position, data = pushups, alternative = 'greater')
+```
+The p-value is 0.000008656.  This means that if the null hypothesis is true, the probability of getting this sample result is 0.000008656,  This is too small to have reasonably happened by chance, so we reject $H_0$, and conclude, with 95% confidence, that the average weight of a player in the LINE position is greater than the average weitht of a player in a SKILL positon.
+
+***
+
+## Resampling 
+
+Current statistic inference relies heavily of bootstrap methods, resampling and estimaion from resampled distributions.    In this example we'll randomly sample 4 players from the LINE position and 11 players from the SLILL postions, compute the means of each group and print a distribution of the difference in means.
+```{r}
+differenceInMeans = vector('numeric')
+
+for (i in 1:100000) {  
+  LINEsample = sample(pushups$weight[pushups$position=='LINE'], size = 4,                        replace = TRUE)
+  SKILLsample = sample(pushups$weight[pushups$position=='SKILL'], size = 11,   replace = TRUE)
+  differenceInMeans[i] = mean(LINEsample)-mean(SKILLsample)
+}
+ppt0.025 = sort(differenceInMeans,decreasing = FALSE)[2500]
+hist(differenceInMeans, breaks=15)
+abline(v = ppt0.025, col='red', lty=2)
+
+print(paste(' Lower 95% CI = ', ppt0.025))
+```
+
+
+<!---
+The histogram summarizes all 100000 differences in means.  Sorting the differences and looking at the 250th value is the lower 0.025 % value.  For a 95% confidence interval this would be the lower limit.  From the histogram, how likely is it that the null hypothesis is true?
+-->
